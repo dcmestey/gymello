@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gymello — Plany treningowe i diety</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome (ikony) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    (function(){ 
+      emailjs.init("X068PC7dyoI2k-XlB"); // Twój public key
+    })();
+  </script>
+</head>
+<body>
+  <!-- HEADER / NAV -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <h1>Gymello</h1>
+        <p class="tag">Plany • Diety • Wyniki</p>
+      </div>
+
+      <nav class="nav" aria-label="Główne">
+        <a href="#home" class="nav-link">Strona główna</a>
+        <a href="#bmi" class="nav-link">Licznik BMI</a>
+        <a href="#plans" class="nav-link">Plany</a>
+        <a href="#offer" class="nav-link">Nasza oferta</a>
+        <a href="#rules" class="nav-link">Regulamin</a>
+        <a href="#about" class="nav-link">O nas</a>
+      </nav>
+
+      <button class="cta" id="buyBtn">Kup plan</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section id="home" class="hero">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h2>Twój nowy rozdział w fitness zaczyna się tutaj</h2>
+          <p class="muted">Spersonalizowane plany treningowe i diety. Prosto, estetycznie i skutecznie.</p>
+          <div class="hero-actions">
+            <a href="#plans" class="btn primary">Zobacz plany</a>
+            <a href="#bmi" class="btn ghost">Sprawdź BMI</a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=80" alt="Gym">
+        </div>
+      </div>
+    </section>
+
+    <!-- BMI -->
+    <section id="bmi" class="section card">
+      <h3 class="section-title">Licznik BMI</h3>
+      <div class="bmi-wrap">
+        <div class="bmi-left">
+          <p class="muted">Podaj wagę i wzrost, aby sprawdzić kategorię.</p>
+          <input type="number" id="weight" placeholder="Waga (kg)" />
+          <input type="number" id="height" placeholder="Wzrost (cm)" />
+          <button onclick="calculateBMI()" class="btn primary">Oblicz BMI</button>
+          <p id="result" class="result"></p>
+          <p id="comment" class="comment"></p>
+        </div>
+        <div class="bmi-right">
+          <div class="bmi-chart">
+            <div class="bmi-bar">
+              <div class="bmi-indicator" id="bmiIndicator" style="width:0%"></div>
+            </div>
+            <div class="bmi-legend">
+              <span>Niedowaga</span><span>Prawidłowa</span><span>Nadwaga</span><span>Otyłość</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLANS -->
+    <section id="plans" class="section">
+      <h3 class="section-title">Plany</h3>
+      <p class="muted">Wybierz plan dopasowany do celu: budowa masy, redukcja, siła, mobilność.</p>
+
+      <div class="cards">
+        <!-- card 1 -->
+        <article class="plan-card">
+          <div class="plan-media">
+            <img src="https://images.unsplash.com/photo-1518611012118-f0c5dff7d5d0?auto=format&fit=crop&w=800&q=80" alt="plan1">
+          </div>
+          <div class="plan-body">
+            <h4>Plan Treningowy</h4>
+            <p>Idealny dla początkujących oraz doświadczonych.</p>
+            <div class="meta">
+              <div class="price">19.99 PLN</div>
+              <button class="btn primary small buy-now" data-plan="Plan Treningowy">Kup</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- card 2 -->
+        <article class="plan-card">
+          <div class="plan-media">
+            <img src="https://images.unsplash.com/photo-1550345332-09e3ac987658?auto=format&fit=crop&w=800&q=80" alt="plan2">
+          </div>
+          <div class="plan-body">
+            <h4>Dopasowana dieta</h4>
+            <p> Spersonalizowana dieta do twojego planu.</p>
+            <div class="meta">
+              <div class="price">19.99 PLN</div>
+              <button class="btn primary small buy-now" data-plan="Dopasowana dieta">Kup</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- card 3 -->
+        <article class="plan-card">
+          <div class="plan-media">
+            <img src="https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=800&q=80" alt="plan3">
+          </div>
+          <div class="plan-body">
+            <h4>Ocena sylwetki i zalecenia specjalisty</h4>
+            <p>Ocena sylwetki przez specjalistów.</p>
+            <div class="meta">
+              <div class="price">19.99 PLN</div>
+              <button class="btn primary small buy-now" data-plan="Ocena sylwetki i zalecenia specjalisty">Kup</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- OFFER -->
+    <section id="offer" class="section card">
+      <h3 class="section-title">Nasza oferta</h3>
+      <div class="offer-grid">
+        <div class="offer-item">
+          <i class="fa-solid fa-dumbbell fa-2x"></i>
+          <h4>Spersonalizowane treningi</h4>
+          <p>Plany dopasowane do Twojego doświadczenia i celów.</p>
+        </div>
+        <div class="offer-item">
+          <i class="fa-solid fa-apple-whole fa-2x"></i>
+          <h4>Rozpiski dietetyczne</h4>
+          <p>Zbilansowane jadłospisy zgodne z Twoim trybem życia.</p>
+        </div>
+        <div class="offer-item">
+          <i class="fa-solid fa-hand-holding-heart fa-2x"></i>
+          <h4>Wsparcie</h4>
+          <p>Porady i korekty od naszych trenerów (opcjonalnie).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RULES / REGULAMIN -->
+    <section id="rules" class="section">
+      <h3 class="section-title">Regulamin</h3>
+      <div class="card">
+        <p><strong>Przed zakupem:</strong></p>
+        <ul>
+          <li>Podczas zamówienia prosimy podać swój wiek, wzrost i wagę.</li>
+          <li>W formularzu napisz cel: <em>np. zmniejszenie masy ciała, przybranie masy, budowanie mięśni</em>.</li>
+          <li>Wskaż, czy masz jakieś uczulenia lub przeciwwskazania dietetyczne.</li>
+          <li>Podaj, ile dni w tygodniu chcesz ćwiczyć oraz dodatkowe zalecenia (np. dostęp do siłowni, kontuzje).</li>
+        </ul>
+        <p>Zakup planu oznacza akceptację zasad realizacji oraz zgodę na przetwarzanie danych osobowych w celu wysłania planu.</p>
+      </div>
+    </section>
+
+    <!-- ABOUT / O NAS -->
+    <section id="about" class="section card">
+      <h3 class="section-title">O nas</h3>
+      <div class="about-grid">
+        <div class="about-text">
+          <p>Ta strona została stworzona przez youtuberów — synów koleżanki twojej mamy 😉. Specjalizujemy się w treningu siłowym i tworzeniu praktycznych planów treningowych. Sprzedajemy plany, bo chcemy pomagać ludziom osiągać ich cele – prostymi i skutecznymi metodami.</p>
+          <p>Kontakt: <strong>kontaktgymello6@gmail.com</strong></p>
+        </div>
+        <div class="about-image">
+          <img src="https://images.unsplash.com/photo-1526401485004-2fa806b5d7a7?auto=format&fit=crop&w=800&q=80" alt="team">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; <span id="year"></span> Gymello — Wszystkie prawa zastrzeżone.</p>
+      <div class="socials">
+        <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL ZAMÓWIENIA -->
+  <div class="modal" id="buyModal" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <h3>Kup plan — 19.99 PLN</h3>
+
+      <form id="purchaseForm">
+        <label>Imię i nazwisko
+          <input type="text" name="from_name" id="from_name" required>
+        </label>
+
+        <label>Email
+          <input type="email" name="from_email" id="from_email" required>
+        </label>
+
+        <label>Wiek
+          <input type="number" name="age" id="age" min="13" required>
+        </label>
+
+        <label>Wzrost (cm)
+          <input type="number" name="height_info" id="height_info" required>
+        </label>
+
+        <label>Waga (kg)
+          <input type="number" name="weight_info" id="weight_info" required>
+        </label>
+
+        <label>Cel
+          <select name="goal" id="goal" required>
+            <option value="">-- wybierz cel --</option>
+            <option value="Schudnąć">Schudnąć</option>
+            <option value="Przybrać na masie">Przybrać na masie</option>
+            <option value="Zbudować mięśnie">Zbudować mięśnie</option>
+            <option value="Poprawić kondycję">Poprawić kondycję</option>
+          </select>
+        </label>
+
+        <label>Uczulenia / przeciwwskazania (opcjonalnie)
+          <input type="text" id="allergies" name="allergies" placeholder="np. orzechy, laktoza, inne">
+        </label>
+
+        <label>Ile dni w tygodniu chcesz ćwiczyć?
+          <input type="number" id="days_per_week" name="days_per_week" min="1" max="7" required>
+        </label>
+
+        <label>Dodatkowe zalecenia / info (opcjonalnie)
+          <textarea id="additional" name="additional" placeholder="np. kontuzja, dostęp do sprzętu"></textarea>
+        </label>
+
+        <label>Zgoda na przetwarzanie danych
+          <input type="checkbox" id="consent" required> Wyrażam zgodę na przetwarzanie danych osobowych w celu realizacji zamówienia.
+        </label>
+
+        <label>Wybrany plan
+          <input type="text" name="plan" id="plan" readonly>
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Kup i wyślij zamówienie — 19.99 PLN</button>
+        </div>
+      </form>
+
+      <div id="purchaseFeedback" class="feedback" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="script.js"></script>
+</body>
+</html>
