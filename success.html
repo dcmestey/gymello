@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gymello - Sukces</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+  <div class="confirmation-box">
+    <h1>✅ Dziękujemy za zakup!</h1>
+    <p>Twoja płatność została przyjęta, a zamówienie wysłane na e-mail.</p>
+    <a href="index.html" class="btn">Wróć na stronę główną</a>
+  </div>
+
+  <script>
+    (function(){
+      emailjs.init("X068PC7dyoI2k-XlB");
+      const orderData = JSON.parse(localStorage.getItem("gymello_pending_order"));
+      if(orderData){
+        emailjs.send("serviceid_gymello", "template_lhauftr", orderData)
+          .then(() => console.log("✅ Email wysłany po płatności"))
+          .catch(err => console.error("❌ Błąd EmailJS:", err));
+        localStorage.removeItem("gymello_pending_order");
+      }
+    })();
+  </script>
+</body>
+</html>
