@@ -1,4 +1,8 @@
-// script.js - Gymello interakcje + EmailJS zamówienie
+// script.js - Gymello interakcje + EmailJS zamówienie + Stripe Checkout (minimalne dodatki)
+
+// --- DODANE: inicjalizacja Stripe (publishable key) ---
+const stripe = Stripe("pk_live_51SClLeRpk9r2NriQtS4iG3ns3FdozY1N9ot2Y1RzRFgnWtm1CJhilm5jQ6eA4DmuvFODxqraTIcdqftJx1iE4kbm00OMHUcrXY");
+// ------------------------------------------------------------------
 
 // ustaw rok w stopce
 document.getElementById('year').innerText = new Date().getFullYear();
@@ -44,9 +48,11 @@ function closePurchaseModal(){
 }
 
 modalClose.addEventListener('click', closePurchaseModal);
-modal.addEventListener('click', (e)=>{ if (e.target === modal) closePurchaseModal(); });
+modal.addEventListener('click', (e)=>{
+  if (e.target === modal) closePurchaseModal();
+});
 
-// --- EmailJS integration ---
+// --- EmailJS integration (modyfikacja: zapisz zamówienie i przekieruj do Stripe Checkout) ---
 purchaseForm.addEventListener('submit', function(e){
   e.preventDefault();
 
@@ -83,23 +89,52 @@ purchaseForm.addEventListener('submit', function(e){
   };
 
   purchaseFeedback.style.display = 'block';
-  purchaseFeedback.innerText = 'Wysyłam zamówienie...';
+  purchaseFeedback.innerText = 'Przygotowuję płatność...';
 
-  // === POPRAWIONA WERSJA WYWOŁANIA EMAILJS ===
-  emailjs.init('X068PC7dyoI2k-XlB'); // ← Twój public key (inicjalizacja EmailJS)
+  // --- ZAMIANA: zamiast natychmiastowego emailjs.send -> zapisz dane i przekieruj do Stripe Checkout ---
+  // 1) zapisz dane (będziemy je wysyłać po potwierdzeniu płatności)
+  try {
+    localStorage.setItem('gymello_pending_order', JSON.stringify(templateParams));
+  } catch (err) {
+    console.error('LocalStorage error:', err);
+  }
 
-  emailjs.send('serviceid_gymello', 'template_lhauftr', templateParams)
-    .then(() => {
-      purchaseFeedback.innerText = '✅ Zamówienie wysłane!';
-      setTimeout(() => closePurchaseModal(), 2500);
-    })
-    .catch((error) => {
-      purchaseFeedback.innerText = '❌ Błąd przy wysyłaniu, spróbuj ponownie później';
-      console.error('EmailJS error:', error);
-    });
+  // 2) wybierz price_id na podstawie wybranego planu (podstawione Twoje price IDs)
+  let selectedPriceId = '';
+  if (plan.toLowerCase().includes('trening')) {
+    selectedPriceId = 'price_1SIof3Rpk9r2NriQnsDD20aK';
+  } else if (plan.toLowerCase().includes('dieta') || plan.toLowerCase().includes('diet')) {
+    selectedPriceId = 'price_1SIogaRpk9r2NriQVMgcb5rC';
+  } else if (plan.toLowerCase().includes('ocena') || plan.toLowerCase().includes('sylwet')) {
+    selectedPriceId = 'price_1SIoiZRpk9r2NriQIuTAf1TA';
+  } else {
+    selectedPriceId = 'price_1SIof3Rpk9r2NriQnsDD20aK'; // domyślny
+  }
+
+  // 3) redirectToCheckout (client-side) - Stripe publishable key wcześniej zainicjowany
+  if (!stripe) {
+    purchaseFeedback.innerText = 'Błąd: Stripe nie został zainicjalizowany.';
+    console.error('Stripe not initialized');
+    return;
+  }
+
+  stripe.redirectToCheckout({
+    lineItems: [{ price: selectedPriceId, quantity: 1 }],
+    mode: 'payment',
+    successUrl: window.location.origin + '/success.html',
+    cancelUrl: window.location.origin + '/cancel.html'
+
+  }).then(function(result) {
+    if (result.error) {
+      purchaseFeedback.innerText = 'Wystąpił błąd przy przekierowaniu do płatności.';
+      console.error('Stripe redirect error:', result.error);
+    }
+  });
+
+  // --- KONIEC ZMIANY: nie wywołujemy emailjs.send() tutaj już ---
 });
 
-// --- BMI ---
+// --- BMI funkcja (dla sekcji BMI) ---
 function calculateBMI() {
   const w = parseFloat(document.getElementById('weight').value);
   const h = parseFloat(document.getElementById('height').value) / 100;
@@ -139,3 +174,59 @@ function calculateBMI() {
   commentEl.innerText = comment;
   indicator.style.width = pct + '%';
 }
+
+// --- DODANE: po powrocie z Stripe (success) wyślij email przez EmailJS korzystając z zapisanych danych ---
+(function sendEmailAfterStripe() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get('checkout'); // oczekujemy ?checkout=success lub ?checkout=cancel
+  if (!status) return;
+
+  if (status === 'success') {
+    const raw = localStorage.getItem('gymello_pending_order');
+    if (!raw) {
+      // nie ma zapisanych danych — wyświetl info i zakończ
+      purchaseFeedback.style.display = 'block';
+      purchaseFeedback.innerText = 'Płatność zakończona — brak lokalnych danych zamówienia.';
+      // usuń parametry z URL
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      return;
+    }
+
+    const saved = JSON.parse(raw);
+
+    // inicjalizacja EmailJS (jeśli potrzebna)
+    try {
+      emailjs.init('X068PC7dyoI2k-XlB');
+    } catch (err) {
+      // ignore if already initialized
+    }
+
+    purchaseFeedback.style.display = 'block';
+    purchaseFeedback.innerText = 'Płatność potwierdzona — wysyłam zamówienie...';
+
+    emailjs.send('serviceid_gymello', 'template_lhauftr', saved)
+      .then(() => {
+        purchaseFeedback.innerText = '✅ Zamówienie wysłane! Sprawdź maila.';
+        // posprzątaj
+        localStorage.removeItem('gymello_pending_order');
+        // usuń parametry z URL, żeby nie wysyłać ponownie przy odświeżeniu
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      })
+      .catch((err) => {
+        purchaseFeedback.innerText = '❌ Błąd przy wysyłce po płatności. Sprawdź logi.';
+        console.error('EmailJS error after Stripe:', err);
+      });
+  } else if (status === 'cancel') {
+    // anulowana płatność
+    purchaseFeedback.style.display = 'block';
+    purchaseFeedback.innerText = 'Płatność anulowana. Możesz spróbować ponownie.';
+    // (zamówienie w localStorage pozostaje, żeby użytkownik nie musiał nic przepisywać)
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+})();
