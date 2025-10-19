@@ -111,27 +111,30 @@ purchaseForm.addEventListener('submit', function(e){
     selectedPriceId = 'price_1SIof3Rpk9r2NriQnsDD20aK'; // domyślny
   }
 
-  // 3) redirectToCheckout (client-side) - Stripe publishable key wcześniej zainicjowany
-  if (!stripe) {
-    purchaseFeedback.innerText = 'Błąd: Stripe nie został zainicjalizowany.';
-    console.error('Stripe not initialized');
-    return;
-  }
-
-  stripe.redirectToCheckout({
-    lineItems: [{ price: selectedPriceId, quantity: 1 }],
-    mode: 'payment',
-    successUrl: window.location.origin + '/success.html',
-    cancelUrl: window.location.origin + '/cancel.html'
-
-  }).then(function(result) {
-    if (result.error) {
-      purchaseFeedback.innerText = 'Wystąpił błąd przy przekierowaniu do płatności.';
-      console.error('Stripe redirect error:', result.error);
+  // ✅ --- POPRAWIONY FRAGMENT: połączenie z backendem Render.com ---
+  fetch("https://gymello-backend.onrender.com/create-checkout-session", { // 🟢 POPRAWIONY ADRES
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      priceId: selectedPriceId
+    })
+  })
+  .then(res => res.json())
+  .then(session => {
+    if (session.id) {
+      stripe.redirectToCheckout({ sessionId: session.id });
+    } else {
+      purchaseFeedback.innerText = 'Błąd: nie udało się utworzyć sesji płatności.';
+      console.error(session);
     }
+  })
+  .catch(err => {
+    purchaseFeedback.innerText = 'Błąd połączenia z serwerem płatności.';
+    console.error(err);
   });
-
-  // --- KONIEC ZMIANY: nie wywołujemy emailjs.send() tutaj już ---
+  // ✅ --- KONIEC POPRAWIONEGO FRAGMENTU ---
 });
 
 // --- BMI funkcja (dla sekcji BMI) ---
@@ -184,10 +187,8 @@ function calculateBMI() {
   if (status === 'success') {
     const raw = localStorage.getItem('gymello_pending_order');
     if (!raw) {
-      // nie ma zapisanych danych — wyświetl info i zakończ
       purchaseFeedback.style.display = 'block';
       purchaseFeedback.innerText = 'Płatność zakończona — brak lokalnych danych zamówienia.';
-      // usuń parametry z URL
       if (window.history && window.history.replaceState) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
@@ -196,12 +197,9 @@ function calculateBMI() {
 
     const saved = JSON.parse(raw);
 
-    // inicjalizacja EmailJS (jeśli potrzebna)
     try {
       emailjs.init('X068PC7dyoI2k-XlB');
-    } catch (err) {
-      // ignore if already initialized
-    }
+    } catch (err) {}
 
     purchaseFeedback.style.display = 'block';
     purchaseFeedback.innerText = 'Płatność potwierdzona — wysyłam zamówienie...';
@@ -209,9 +207,7 @@ function calculateBMI() {
     emailjs.send('serviceid_gymello', 'template_lhauftr', saved)
       .then(() => {
         purchaseFeedback.innerText = '✅ Zamówienie wysłane! Sprawdź maila.';
-        // posprzątaj
         localStorage.removeItem('gymello_pending_order');
-        // usuń parametry z URL, żeby nie wysyłać ponownie przy odświeżeniu
         if (window.history && window.history.replaceState) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
@@ -221,12 +217,11 @@ function calculateBMI() {
         console.error('EmailJS error after Stripe:', err);
       });
   } else if (status === 'cancel') {
-    // anulowana płatność
     purchaseFeedback.style.display = 'block';
     purchaseFeedback.innerText = 'Płatność anulowana. Możesz spróbować ponownie.';
-    // (zamówienie w localStorage pozostaje, żeby użytkownik nie musiał nic przepisywać)
     if (window.history && window.history.replaceState) {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }
 })();
+
