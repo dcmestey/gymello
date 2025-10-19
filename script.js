@@ -123,8 +123,8 @@ purchaseForm.addEventListener('submit', function(e){
   })
   .then(res => res.json())
   .then(session => {
-    if (session.id) {
-      stripe.redirectToCheckout({ sessionId: session.id });
+    if (session.url) {
+      window.location.href = session.url
     } else {
       purchaseFeedback.innerText = 'Błąd: nie udało się utworzyć sesji płatności.';
       console.error(session);
@@ -224,4 +224,5 @@ function calculateBMI() {
     }
   }
 })();
+
 
